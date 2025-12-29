@@ -114,11 +114,12 @@ class MCTS:
         self.root = Node(state, terminated, value, 0, 0, self.args)
 
     def advance_root(self, action):
-        for child in self.root.children:
-            if action == child.action:
-                self.root = child
-                child.parent = None
-                break
+        if not self.root is None:
+            for child in self.root.children:
+                if action == child.action:
+                    self.root = child
+                    child.parent = None
+                    break
 
     @torch.no_grad
     def search(self, state, num_searches = None):

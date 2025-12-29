@@ -139,5 +139,7 @@ class Board:
                     return_str += "Y "
                 if col == 6:
                     return_str += "\n"
+        for i in range(7):
+            return_str += str(i + 1) + " "
         return return_str
 

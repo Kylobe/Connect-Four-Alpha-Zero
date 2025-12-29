@@ -153,7 +153,7 @@ class AlphaZero:
         while not done:
             turn += 1
             start = time.perf_counter()
-            action_probs = self.mcts.search(state, num_searches=50*turn)
+            action_probs = self.mcts.search(state)
             memory.append((state, action_probs, player))
             action = np.random.choice(self.env.num_moves, p=action_probs)
             self.mcts.advance_root(action)

@@ -20,14 +20,14 @@ def run_worker(rank, model, args, return_queue):
 
 def main():
     mp.set_start_method("spawn", force=True)
-    load_model = False
+    load_model = True
     args = {
         'C': 2,
-        'num_searches': 200,
-        'num_iterations': 10,
-        'num_self_play_iterations': 10,
+        'num_searches': 1000,
+        'num_iterations': 20,
+        'num_self_play_iterations': 20,
         'epochs': 2,
-        'num_processes': 10,
+        'num_processes': 12,
         'res_blocks': 40,
         'num_hidden': 256,
         'batch_size': 256,
@@ -37,16 +37,18 @@ def main():
     env = ConnectFourEnv()
     model = AlphaZeroConnectFourNN(num_resBlocks=args['res_blocks'], num_hidden=args['num_hidden'])
     if load_model:
-        model.load_state_dict(torch.load("LatestAlphaChess.pt", map_location=torch.device('cpu')))
+        model.load_state_dict(torch.load("BestConnect4Model.pt", map_location=torch.device('cpu')))
     model.share_memory()
 
 
 
     optimizer = optim.AdamW(model.parameters(), lr=5e-3)
     if load_model:
-        optimizer.load_state_dict(torch.load("LatestOptimizer.pt", map_location=torch.device('cpu')))
+        optimizer.load_state_dict(torch.load("BestConnect4Optim.pt", map_location=torch.device('cpu')))
     alpha = AlphaZero(model, optimizer, env, args)
     memory = deque(maxlen=50000)
+    if load_model:
+        memory += torch.load(f"LastData.pt", weights_only=False)
     scheduler = CosineAnnealingLR(optimizer, T_max=50) 
     for iteration in range(args['num_iterations']):
         model.eval()
@@ -74,10 +76,12 @@ def main():
             scheduler.step()
             print(f"[Iter {iteration+1}] Epoch {epoch+1}: Total Loss = {avg_loss}, Policy Loss: {avg_policy}, Value Loss: {avg_value}")
 
-        torch.save(model.state_dict(), f"Phase1AlphaChess{iteration}.pt")
-        torch.save(optimizer.state_dict(), f"Phase1Optimizer{iteration}.pt")
-    torch.save(model.state_dict(), f"LatestAlphaChess.pt")
+        torch.save(model.state_dict(), f"AlphaModel{iteration}.pt")
+        torch.save(optimizer.state_dict(), f"AlphaOptim{iteration}.pt")
+        torch.save(memory, f"LastData.pt")
+    torch.save(model.state_dict(), f"LatestAlphaConnect4.pt")
     torch.save(optimizer.state_dict(), f"LatestOptimizer.pt")
+    torch.save(memory, f"LastData.pt")
 
 
 if __name__ == "__main__":
